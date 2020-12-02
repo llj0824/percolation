@@ -1,29 +1,35 @@
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-public class Percolation implements IPercolation {
+
+public class Percolation {
     private final int boardSize;
-    private final Set<Integer> openRows;
-    private final Set<Integer> topRows;
+    private int numOpenSites;
+    private final int[] openRows;
+    private final int[] topRows;
     private final WeightedQuickUnionUF uf;
-    private final Set<Integer> bottomRows;
+    private final int[] bottomRows;
     private final static int OUT_OF_BOUND = -1;
+    private final static int OPEN = 1;
 
     // creates n-by-n grid, with all sites initially blocked
     public Percolation(int n) {
         boardSize = n;
-        openRows = new HashSet<>();
-        bottomRows = new HashSet<>();
-        topRows = new HashSet<>();
+        numOpenSites = 0;
+        openRows = new int[n * n];
+        bottomRows = new int[n];
+        topRows = new int[n];
         uf = new WeightedQuickUnionUF(n * n);
+
+        for (int i = 0; i < n; i++) {
+            topRows[i] = OUT_OF_BOUND;
+            bottomRows[i] = OUT_OF_BOUND;
+        }
     }
 
     // opens the site (row, col) if it is not open already
-    @Override
     public void open(int row, int col) {
         final int curCell = getKey(row, col);
         if (isOpen(row, col)) {
@@ -33,13 +39,14 @@ public class Percolation implements IPercolation {
 
         // store top row
         if (row == 0) {
-            topRows.add(curCell);
+            topRows[col] = curCell;
         }
         // store bottom row
         if (row == boardSize - 1) {
-            bottomRows.add(curCell);
+            bottomRows[col] = curCell;
         }
-        openRows.add(curCell);
+        openRows[curCell] = OPEN;
+        numOpenSites++;
         final List<Integer> directions = Arrays.asList(
                 isOutOfVerticalEdge(col - 1) ? OUT_OF_BOUND : getKey(row, col - 1), //left
                 getKey(row - 1, col), // up
@@ -53,41 +60,49 @@ public class Percolation implements IPercolation {
     }
 
     // is the site (row, col) open?
-    @Override
     public boolean isOpen(int row, int col) {
-        return openRows.contains(getKey(row, col));
+        return openRows[getKey(row, col)] == OPEN;
     }
 
-    boolean isOpen(int n) {
-        return openRows.contains(n);
+    private boolean isOpen(int n) {
+        return openRows[n] == OPEN;
     }
 
     // is the site (row, col) full? -> percolates up
-    @Override
     public boolean isFull(int row, int col) {
-        return topRows.stream()
-                .anyMatch(topRow -> uf.find(topRow) == uf.find(getKey(row, col)));
+        for (int topRow : topRows) {
+            if (isOutOfBounds(topRow)) {
+                continue;
+            }
+            if (uf.find(topRow) == uf.find(getKey(row, col))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // returns the number of open sites
-    @Override
     public int numberOfOpenSites() {
-        return openRows.size();
+        return numOpenSites;
     }
 
     // does the system percolate?
-    @Override
     public boolean percolates() {
         // check if any bottom rows are connected to a top row.
-        return bottomRows.stream()
-                .anyMatch(bottomRow -> {
-                    for (Integer topRow : topRows) {
-                        if (uf.find(topRow) == uf.find(bottomRow)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+        for (int bottomRow : bottomRows) {
+            if (isOutOfBounds(bottomRow)) {
+                continue;
+            }
+            for (int topRow : topRows) {
+                if (isOutOfBounds(topRow)) {
+                    continue;
+                }
+                if (uf.find(topRow) == uf.find(bottomRow)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private int getKey(int row, int col) {
@@ -101,5 +116,4 @@ public class Percolation implements IPercolation {
     private boolean isOutOfVerticalEdge(final int col) {
         return col < 0 || col > boardSize - 1;
     }
-
 }
