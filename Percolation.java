@@ -4,12 +4,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class Percolation {
     final int boardSize;
     final Set<String> topRows;
+    final Set<String> bottomRows;
     final Map<String, Set<String>> nodeToConnectedNodesMap;
 
     // creates n-by-n grid, with all sites initially blocked
@@ -19,9 +18,8 @@ public class Percolation {
         }
         nodeToConnectedNodesMap = new HashMap<>();
         boardSize = n;
-        topRows = IntStream.range(0, boardSize).boxed()
-                .map(col -> getKey(0, col))
-                .collect(Collectors.toSet());
+        topRows = new HashSet<>();
+        bottomRows = new HashSet<>();
     }
 
     // opens the site (row, col) if it is not open already
@@ -29,27 +27,38 @@ public class Percolation {
         final String curCell = getKey(row, col);
         if (isOpen(row, col) || isOutOfBounds(row, col)) {
             // already open. Do nothing.
-             return;
+            return;
+        }
+
+        // store top row
+        if (row == 0) {
+            topRows.add(curCell);
+        }
+        // store bottom row
+        if (row == boardSize-1) {
+            bottomRows.add(curCell);
         }
 
         nodeToConnectedNodesMap.put(curCell, new HashSet<>(Arrays.asList(curCell)));
         final List<String> directions = Arrays.asList(
-                getKey(row, col-1), //left
-                getKey(row-1, col), // up
-                getKey(row, col+1), //right
-                getKey(row+1, col)); //down
+                getKey(row, col - 1), //left
+                getKey(row - 1, col), // up
+                getKey(row, col + 1), //right
+                getKey(row + 1, col)); //down
         for (String neighborCell : directions) {
             if (nodeToConnectedNodesMap.containsKey(neighborCell)) {
                 Set<String> neighboringSet = nodeToConnectedNodesMap.get(neighborCell);
                 Set<String> curSet = nodeToConnectedNodesMap.get(curCell);
-                Set<String> biggerSet = neighboringSet.size() > curSet.size() ? neighboringSet :
-                        curSet;
-                Set<String> smallerSet = neighboringSet.size() <= curSet.size() ? neighboringSet :
-                        curSet;
-                biggerSet.addAll(smallerSet); // superset
+                if (curSet != neighboringSet) {
+                    Set<String> biggerSet = neighboringSet.size() > curSet.size() ? neighboringSet :
+                            curSet;
+                    Set<String> smallerSet = neighboringSet.size() <= curSet.size() ? neighboringSet :
+                            curSet;
+                    biggerSet.addAll(smallerSet); // superset
 
-                // update reference of all smaller set's elements.
-                smallerSet.stream().forEach(key -> nodeToConnectedNodesMap.put(key, biggerSet));
+                    // update reference of all smaller set's elements.
+                    smallerSet.stream().forEach(key -> nodeToConnectedNodesMap.put(key, biggerSet));
+                }
             }
         }
     }
@@ -76,12 +85,8 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        Set<String> bottomRows = IntStream.range(0, boardSize).boxed()
-                .map(col -> getKey(boardSize-1, col)).collect(Collectors.toSet());
-
         // check if any bottom rows are connected to a top row.
         return bottomRows.stream()
-                .filter(bottomRow -> nodeToConnectedNodesMap.containsKey(bottomRow))
                 .anyMatch(bottomRow -> {
                     Set<String> connectCells = nodeToConnectedNodesMap.get(bottomRow);
                     for (String topRow : topRows) {

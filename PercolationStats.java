@@ -7,7 +7,7 @@ import java.util.List;
 
 public class PercolationStats {
     final double elapsedTime;
-    private final int[] percolationThresholds;
+    private final double[] percolationThresholds;
 
     // perform independent trials on an n-by-n grid
     public PercolationStats(int n, int trials) {
@@ -16,7 +16,7 @@ public class PercolationStats {
             throw new IllegalArgumentException("PercolationStats initialization value must be greater than 0.");
         }
 
-        percolationThresholds = new int[trials];
+        percolationThresholds = new double[trials];
         for (int t = 0; t < trials; t++) {
             System.out.println("trial: " + t);
             final Percolation trial = new Percolation(n);
@@ -27,7 +27,7 @@ public class PercolationStats {
                 trial.open(row, col);
             } while (trial.percolates() == false);
             System.out.println("elapsedtime: " + stopwatch.elapsedTime());
-            percolationThresholds[t] = trial.numberOfOpenSites();
+            percolationThresholds[t] = trial.numberOfOpenSites() /(Math.pow(n, 2));
         }
 
         elapsedTime = stopwatch.elapsedTime();
