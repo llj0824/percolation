@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PercolationSolution implements Percolation {
+public class PercolationSolution implements IPercolation {
     final int boardSize;
     final Set<String> topRows;
     final Set<String> bottomRows;

@@ -19,7 +19,7 @@ public class PercolationStats {
         percolationThresholds = new double[trials];
         for (int t = 0; t < trials; t++) {
             System.out.println("trial: " + t);
-            final Percolation trial = new PercolationSolution(n);
+            final Percolation trial = new Percolation(n);
             do {
                 // randomly open cell
                 final int row = StdRandom.uniform(n);
