@@ -62,7 +62,7 @@ public class PercolationVisualizer {
     private static void simulateFromFile(String filename) {
         In in = new In(filename);
         int n = in.readInt();
-        Percolation percolation = new PercolationWeightedUnion(n);
+        Percolation percolation = new PercolationSolution(n);
 
         // turn on animation mode
         StdDraw.enableDoubleBuffering();
