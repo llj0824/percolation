@@ -1,57 +1,53 @@
+import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
-
-import java.util.Arrays;
-import java.util.List;
-
 
 public class Percolation {
     private final int boardSize;
     private int numOpenSites;
-    private final int[] openRows;
-    private final int[] topRows;
+    private final boolean[] openRows;
+    private final int virtualLinkTopRows = 0; // is connected to all the top rows. Set to unused index [0-boardSize]. Board starts at [1,1], or [boardSize, boardSize^2-1]
+    private final int virtualLinkBottomRows = 1; // is connected to all the bottom rows
     private final WeightedQuickUnionUF uf;
-    private final int[] bottomRows;
     private final static int OUT_OF_BOUND = -1;
-    private final static int OPEN = 1;
-
+    private final static int UNEXPLORED = -1;
+    private final static int FIRST_INDEX = 1;
     // creates n-by-n grid, with all sites initially blocked
     public Percolation(int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException("Percolation initialization value must be greater than 0.");
+        }
+        n += 1; // account for index starting at one.
         boardSize = n;
         numOpenSites = 0;
-        openRows = new int[n * n];
-        bottomRows = new int[n];
-        topRows = new int[n];
+        openRows = new boolean[n * n];
         uf = new WeightedQuickUnionUF(n * n);
-
-        for (int i = 0; i < n; i++) {
-            topRows[i] = OUT_OF_BOUND;
-            bottomRows[i] = OUT_OF_BOUND;
-        }
     }
 
     // opens the site (row, col) if it is not open already
     public void open(int row, int col) {
+        validateInput(row, col);
         final int curCell = getKey(row, col);
-        if (isOpen(row, col)) {
+        if (isOutOfBounds(curCell) || isOpen(row, col)) {
             // already open. Do nothing.
             return;
         }
 
         // store top row
-        if (row == 0) {
-            topRows[col] = curCell;
+        if (row == FIRST_INDEX) {
+            uf.union(virtualLinkTopRows, curCell);
         }
         // store bottom row
         if (row == boardSize - 1) {
-            bottomRows[col] = curCell;
+            uf.union(virtualLinkBottomRows, curCell);
         }
-        openRows[curCell] = OPEN;
+        openRows[curCell] = true;
         numOpenSites++;
-        final List<Integer> directions = Arrays.asList(
+        final int[] directions = {
                 isOutOfVerticalEdge(col - 1) ? OUT_OF_BOUND : getKey(row, col - 1), //left
                 getKey(row - 1, col), // up
                 isOutOfVerticalEdge(col + 1) ? OUT_OF_BOUND : getKey(row, col + 1), //right
-                getKey(row + 1, col)); //down
+                getKey(row + 1, col) //down
+        }; //might be performance bug
         for (Integer neighborCell : directions) {
             if (!isOutOfBounds(neighborCell) && isOpen(neighborCell)) {
                 uf.union(curCell, neighborCell);
@@ -61,24 +57,21 @@ public class Percolation {
 
     // is the site (row, col) open?
     public boolean isOpen(int row, int col) {
-        return openRows[getKey(row, col)] == OPEN;
+        validateInput(row, col);
+        return openRows[getKey(row, col)] == true;
     }
 
     private boolean isOpen(int n) {
-        return openRows[n] == OPEN;
+        return openRows[n] == true;
     }
 
     // is the site (row, col) full? -> percolates up
     public boolean isFull(int row, int col) {
-        for (int topRow : topRows) {
-            if (isOutOfBounds(topRow)) {
-                continue;
-            }
-            if (uf.find(topRow) == uf.find(getKey(row, col))) {
-                return true;
-            }
+        validateInput(row, col);
+        if (isOutOfBounds(getKey(row,col))) {
+            return false;
         }
-        return false;
+        return isOutOfBounds(getKey(row,col)) && (uf.find(virtualLinkTopRows) == uf.find(getKey(row, col)));
     }
 
     // returns the number of open sites
@@ -88,21 +81,7 @@ public class Percolation {
 
     // does the system percolate?
     public boolean percolates() {
-        // check if any bottom rows are connected to a top row.
-        for (int bottomRow : bottomRows) {
-            if (isOutOfBounds(bottomRow)) {
-                continue;
-            }
-            for (int topRow : topRows) {
-                if (isOutOfBounds(topRow)) {
-                    continue;
-                }
-                if (uf.find(topRow) == uf.find(bottomRow)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return uf.find(virtualLinkTopRows) == uf.find(virtualLinkBottomRows);
     }
 
     private int getKey(int row, int col) {
@@ -110,10 +89,16 @@ public class Percolation {
     }
 
     private boolean isOutOfBounds(final int n) {
-        return n < 0 || n >= boardSize * boardSize;
+        return n < FIRST_INDEX || n >= boardSize * boardSize;
     }
 
     private boolean isOutOfVerticalEdge(final int col) {
-        return col < 0 || col > boardSize - 1;
+        return col < FIRST_INDEX || col > boardSize - 1;
+    }
+
+    private void validateInput(final int row, final int col) {
+        if (row < FIRST_INDEX || col < FIRST_INDEX || row >= boardSize || col >= boardSize) {
+            throw new IllegalArgumentException();
+        }
     }
 }

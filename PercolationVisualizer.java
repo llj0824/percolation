@@ -24,10 +24,12 @@ import java.awt.Font;
 public class PercolationVisualizer {
 
     // delay in miliseconds (controls animation speed)
-    private static final int DELAY = 5;
+    private static final int DELAY = 1;
+    private static final int OFFSET = 1;
 
     // draw n-by-n percolation system
     public static void draw(Percolation percolation, int n) {
+        n += OFFSET;
         StdDraw.clear();
         StdDraw.setPenColor(StdDraw.BLACK);
         StdDraw.setXscale(-0.05 * n, 1.05 * n);
@@ -35,8 +37,8 @@ public class PercolationVisualizer {
         StdDraw.filledSquare(n / 2.0, n / 2.0, n / 2.0);
 
         // draw n-by-n grid
-        for (int row = 0; row < n; row++) {
-            for (int col = 0; col < n; col++) {
+        for (int row = 0 + OFFSET; row < n; row++) {
+            for (int col = 0 + OFFSET; col < n; col++) {
                 if (percolation.isFull(row, col)) {
                     StdDraw.setPenColor(StdDraw.BOOK_LIGHT_BLUE);
                 }
@@ -73,8 +75,8 @@ public class PercolationVisualizer {
         StdDraw.pause(DELAY);
 
         while (!in.isEmpty()) {
-            int row = in.readInt();
-            int col = in.readInt();
+            int row = in.readInt() + OFFSET;
+            int col = in.readInt() + OFFSET;
             percolation.open(row, col);
             draw(percolation, n);
             StdDraw.show();

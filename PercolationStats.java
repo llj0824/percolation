@@ -9,21 +9,21 @@ public class PercolationStats {
     // perform independent trials on an n-by-n grid
     public PercolationStats(int n, int trials) {
         final Stopwatch stopwatch = new Stopwatch();
-        if (n <= 0 || trials < 0) {
+        if (n <= 0 || trials <= 0) {
             throw new IllegalArgumentException("PercolationStats initialization value must be greater than 0.");
         }
 
         percolationThresholds = new double[trials];
         for (int t = 0; t < trials; t++) {
-            System.out.println("trial: " + t);
+//            System.out.println("trial: " + t);
             final Percolation trial = new Percolation(n);
             do {
                 // randomly open cell
-                final int row = StdRandom.uniform(n);
-                final int col = StdRandom.uniform(n);
+                final int row = StdRandom.uniform(1,n+1);
+                final int col = StdRandom.uniform(1,n+1);
                 trial.open(row, col);
             } while (trial.percolates() == false);
-            System.out.println("elapsedtime: " + stopwatch.elapsedTime());
+//            System.out.println("elapsedtime: " + stopwatch.elapsedTime());
             percolationThresholds[t] = trial.numberOfOpenSites() /(Math.pow(n, 2));
         }
 
@@ -43,7 +43,7 @@ public class PercolationStats {
     // low endpoint of 95% confidence interval
     public double confidenceLo() {
         double x = mean();
-        double s = Math.sqrt(stddev());
+        double s = stddev();
         double T = Math.sqrt(percolationThresholds.length);
         double result = x - (1.96d * (s / T));
         return result;
@@ -52,9 +52,9 @@ public class PercolationStats {
     // high endpoint of 95% confidence interval
     public double confidenceHi() {
         double x = mean();
-        double s = Math.sqrt(stddev());
+        double s = stddev();
         double T = Math.sqrt(percolationThresholds.length);
-        double result =  x + 1.96d * (s/T);
+        double result =  x + (1.96d * (s/T));
         return result;
     }
 
